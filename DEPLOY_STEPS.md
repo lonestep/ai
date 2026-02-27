@@ -3,7 +3,7 @@
 ## 服务器信息
 - IP: 1.14.208.141
 - 用户: root
-- 密码: Lkg4btlf_
+- 密码: [请查看安全配置文件]
 - 域名: bluepivot.net
 
 ---
@@ -18,7 +18,7 @@
 ssh root@1.14.208.141
 ```
 
-输入密码：`Lkg4btlf_`
+输入服务器密码
 
 ### 步骤 2: 安装必要软件
 
@@ -98,7 +98,7 @@ exit
 # 配置 PostgreSQL
 sudo -u postgres psql <<EOF
 CREATE DATABASE myprojectdb;
-CREATE USER django_user WITH PASSWORD 'StrongPass123!@#';
+CREATE USER django_user WITH PASSWORD '[请使用强密码]';
 GRANT ALL PRIVILEGES ON DATABASE myprojectdb TO django_user;
 \q
 EOF

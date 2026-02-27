@@ -1,4 +1,5 @@
 # Python
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -26,12 +27,13 @@ db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
+/static
 
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv
+# Environment variables
+.env
+.env.local
+.env.*.local
+.server-config
 
 # IDE
 .vscode/
@@ -39,11 +41,13 @@ ENV/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
 
-# Environment variables
-.env
-.env.local
+# Deployment
+project_deploy.zip
+*.zip
+
+# Passwords and secrets
+*-secrets.*
+*-passwords.*
+.secrets

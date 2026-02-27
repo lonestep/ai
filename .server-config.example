@@ -1,0 +1,21 @@
+# 服务器配置示例文件
+# 复制此文件为 .server-config 并填写实际信息
+# 注意: 此文件包含敏感信息,请勿提交到版本控制系统
+
+# 服务器信息
+SERVER_IP=1.14.208.141
+SERVER_USER=root
+SERVER_PASSWORD=your_server_password_here
+DOMAIN=bluepivot.net
+
+# 数据库配置
+DB_NAME=myprojectdb
+DB_USER=django_user
+DB_PASSWORD=your_strong_db_password_here
+
+# Django 配置
+DJANGO_SECRET_KEY=your_django_secret_key_here
+DEBUG=False
+
+# 其他配置
+PROJECT_DIR=/home/django/myproject

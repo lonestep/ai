@@ -12,7 +12,7 @@ Write-Host ""
 # Config
 $SERVER = "1.14.208.141"
 $USER = "root"
-$PASSWORD = "Lkg4btlf_"
+$PASSWORD = Read-Host "请输入服务器密码"
 $DOMAIN = "bluepivot.net"
 $PROJECT_DIR = "/home/django/myproject"
 

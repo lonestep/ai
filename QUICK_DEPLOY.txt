@@ -1,0 +1,114 @@
+=============================================================================
+Django 项目快速部署命令集
+=============================================================================
+
+第一步：上传文件到服务器
+=============================================================================
+
+在 PowerShell 中依次执行以下命令（需要输入服务器密码）：
+
+cd d:\src\codebuddy
+
+scp -o StrictHostKeyChecking=no .env.domain root@1.14.208.141:/home/django/
+scp -o StrictHostKeyChecking=no nginx-domain.conf root@1.14.208.141:/home/django/
+scp -o StrictHostKeyChecking=no setup-domain-https.sh root@1.14.208.141:/home/django/
+scp -o StrictHostKeyChecking=no quick-deploy-with-https.sh root@1.14.208.141:/home/django/
+scp -o StrictHostKeyChecking=no project_deploy.zip root@1.14.208.141:/home/django/
+
+
+第二步：SSH 登录并执行部署
+=============================================================================
+
+在 PowerShell 中执行：
+
+ssh root@1.14.208.141
+
+登录后（输入服务器密码），执行以下命令：
+
+cd /home/django
+chmod +x setup-domain-https.sh quick-deploy-with-https.sh
+unzip -q project_deploy.zip -d /home/django/myproject
+rm project_deploy.zip
+chown -R django:django /home/django/myproject
+sudo bash quick-deploy-with-https.sh
+
+
+第三步：监控部署进度
+=============================================================================
+
+在另一个 PowerShell 窗口中执行：
+
+ssh root@1.14.208.141
+tail -f /home/django/deploy.log
+
+
+第四步：验证部署
+=============================================================================
+
+部署完成后，在服务器上执行：
+
+systemctl status nginx
+systemctl status myproject-daphne
+systemctl status postgresql
+systemctl status redis-server
+
+
+第五步：访问应用
+=============================================================================
+
+打开浏览器访问：
+- 应用首页: https://bluepivot.net
+- 管理后台: https://bluepivot.net/admin
+
+
+常见维护命令
+=============================================================================
+
+重启服务:
+  sudo systemctl restart myproject-daphne nginx
+
+查看日志:
+  sudo journalctl -u myproject-daphne -f
+  sudo tail -f /var/log/nginx/error.log
+
+更新代码:
+  cd /home/django/myproject
+  source venv/bin/activate
+  pip install -r requirements-production.txt
+  python manage.py migrate
+  python manage.py collectstatic --noinput
+  sudo systemctl restart myproject-daphne
+
+备份数据库:
+  sudo -u postgres pg_dump myprojectdb > backup_$(date +%Y%m%d).sql
+
+
+配置信息
+=============================================================================
+
+服务器 IP: 1.14.208.141
+域名: bluepivot.net
+用户: root
+密码: [请查看安全配置文件]
+项目目录: /home/django/myproject
+
+预计部署时间: 10-20 分钟
+
+注意事项
+=============================================================================
+
+1. 确保域名 bluepivot.net 已解析到服务器 IP 1.14.208.141
+2. 部署过程中需要输入服务器密码
+3. 部署脚本会自动安装和配置所有必要软件
+4. 部署完成后服务会自动启动
+5. SSL 证书会自动申请并配置自动续期
+
+详细文档
+=============================================================================
+
+DEPLOY_GUIDE.md - 完整部署指南
+DEPLOY_STEPS.md - 详细部署步骤
+SECURITY.md - 安全配置指南
+WEBSOCKET.md - WebSocket 配置
+
+=============================================================================
