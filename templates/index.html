@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django + React 项目</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .form {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .list {
+            list-style: none;
+        }
+
+        .item {
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .item:hover {
+            background: #e9ecef;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .item-description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .delete-button {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .delete-button:hover {
+            background: #c82333;
+        }
+
+        .empty {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .api-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .websocket-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .websocket-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .websocket-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        .status-dot.disconnected {
+            background: #dc3545;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [items, setItems] = useState([]);
+            const [name, setName] = useState('');
+            const [description, setDescription] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [apiStatus, setApiStatus] = useState(null);
+            const [wsConnected, setWsConnected] = useState(false);
+            const [notification, setNotification] = useState(null);
+            const [ws, setWs] = useState(null);
+
+            const API_BASE = '/api';
+            const WS_URL = `ws://${window.location.host}/ws/items/`;
+
+            useEffect(() => {
+                fetchItems();
+                checkApiHealth();
+                connectWebSocket();
+
+                return () => {
+                    if (ws) {
+                        ws.close();
+                    }
+                };
+            }, []);
+
+            const connectWebSocket = () => {
+                try {
+                    const websocket = new WebSocket(WS_URL);
+                    setWs(websocket);
+
+                    websocket.onopen = () => {
+                        setWsConnected(true);
+                        console.log('WebSocket 已连接');
+                        websocket.send(JSON.stringify({ type: 'fetch_items' }));
+                    };
+
+                    websocket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        console.log('收到 WebSocket 消息:', data);
+
+                        if (data.type === 'items_list') {
+                            setItems(data.items);
+                        } else if (data.type === 'item_updated') {
+                            const { id, action } = data.data;
+
+                            if (action === 'created') {
+                                setItems(prev => [...prev, data.data]);
+                                showNotification('新项目已创建');
+                            } else if (action === 'updated') {
+                                setItems(prev =>
+                                    prev.map(item =>
+                                        item.id === id ? { ...item, ...data.data } : item
+                                    )
+                                );
+                                showNotification('项目已更新');
+                            } else if (action === 'deleted') {
+                                setItems(prev => prev.filter(item => item.id !== id));
+                                showNotification('项目已删除');
+                            }
+                        }
+                    };
+
+                    websocket.onclose = () => {
+                        setWsConnected(false);
+                        console.log('WebSocket 已断开');
+                        // 5秒后尝试重连
+                        setTimeout(() => {
+                            if (!wsConnected) {
+                                connectWebSocket();
+                            }
+                        }, 5000);
+                    };
+
+                    websocket.onerror = (error) => {
+                        console.error('WebSocket 错误:', error);
+                        setWsConnected(false);
+                    };
+                } catch (err) {
+                    console.error('WebSocket 连接失败:', err);
+                    setWsConnected(false);
+                }
+            };
+
+            const showNotification = (message) => {
+                setNotification(message);
+                setTimeout(() => {
+                    setNotification(null);
+                }, 3000);
+            };
+
+            const checkApiHealth = async () => {
+                try {
+                    const response = await fetch('/health/');
+                    const data = await response.json();
+                    setApiStatus(data);
+                } catch (err) {
+                    setApiStatus({ status: 'error', message: '无法连接到后端' });
+                }
+            };
+
+            const fetchItems = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await fetch(`${API_BASE}/items/`);
+                    if (!response.ok) throw new Error('获取数据失败');
+                    const data = await response.json();
+                    setItems(data);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!name.trim()) return;
+
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await fetch(`${API_BASE}/items/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name, description }),
+                    });
+
+                    if (!response.ok) throw new Error('创建失败');
+                    // 不需要手动调用 fetchItems，WebSocket 会自动更新
+                    setName('');
+                    setDescription('');
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleDelete = async (id) => {
+                if (!window.confirm('确定要删除吗？')) return;
+
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await fetch(`${API_BASE}/items/${id}/`, {
+                        method: 'DELETE',
+                    });
+
+                    if (!response.ok) throw new Error('删除失败');
+                    // 不需要手动调用 fetchItems，WebSocket 会自动更新
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="container">
+                    <h1>🚀 Django + React + WebSocket 项目</h1>
+
+                    <div className={`websocket-status ${wsConnected ? 'connected' : 'disconnected'}`}>
+                        <div className={`status-dot ${wsConnected ? 'connected' : 'disconnected'}`}></div>
+                        <span>WebSocket: {wsConnected ? '已连接' : '未连接'}</span>
+                    </div>
+
+                    {apiStatus && (
+                        <div className="api-info">
+                            <strong>API 状态:</strong> {apiStatus.status} - {apiStatus.message}
+                        </div>
+                    )}
+
+                    {notification && (
+                        <div className="notification">{notification}</div>
+                    )}
+
+                    {error && <div className="error">{error}</div>}
+
+                    <form className="form" onSubmit={handleSubmit}>
+                        <input
+                            className="input"
+                            type="text"
+                            placeholder="项目名称"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                        <input
+                            className="input"
+                            type="text"
+                            placeholder="描述（可选）"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                        <button className="button" type="submit" disabled={loading}>
+                            添加
+                        </button>
+                    </form>
+
+                    {loading && <div className="loading">加载中...</div>}
+
+                    {!loading && items.length === 0 && (
+                        <div className="empty">暂无数据，请添加项目</div>
+                    )}
+
+                    <ul className="list">
+                        {items.map((item) => (
+                            <li key={item.id} className="item">
+                                <div>
+                                    <div className="item-name">{item.name}</div>
+                                    {item.description && (
+                                        <div className="item-description">{item.description}</div>
+                                    )}
+                                </div>
+                                <button
+                                    className="delete-button"
+                                    onClick={() => handleDelete(item.id)}
+                                >
+                                    删除
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

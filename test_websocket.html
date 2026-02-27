@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket 测试工具</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .log {
+            background: #252526;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #007acc;
+        }
+        .success { border-left-color: #4caf50; }
+        .error { border-left-color: #f44336; }
+        .info { border-left-color: #2196f3; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 4px;
+        }
+        button:hover { background: #1177bb; }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #3c3c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket 测试工具</h1>
+
+    <div>
+        <input type="text" id="wsUrl" value="ws://127.0.0.1:8000/ws/items/" style="width: 400px;">
+        <button onclick="connect()">连接</button>
+        <button onclick="disconnect()">断开</button>
+        <button onclick="sendFetch()">发送 fetch_items</button>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+
+    <div id="logs"></div>
+
+    <script>
+        let ws = null;
+
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.insertBefore(logDiv, logsDiv.firstChild);
+        }
+
+        function connect() {
+            const url = document.getElementById('wsUrl').value;
+            log(`正在连接到 ${url}...`, 'info');
+
+            ws = new WebSocket(url);
+
+            ws.onopen = () => {
+                log('✅ WebSocket 已连接', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`📨 收到消息: ${JSON.stringify(data, null, 2)}`, 'success');
+                } catch (e) {
+                    log(`📨 收到消息: ${event.data}`, 'info');
+                }
+            };
+
+            ws.onclose = (event) => {
+                log(`❌ WebSocket 已断开 (code: ${event.code}, reason: ${event.reason})`, 'error');
+            };
+
+            ws.onerror = (error) => {
+                log(`❌ WebSocket 错误: ${error}`, 'error');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendFetch() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = { type: 'fetch_items' };
+                ws.send(JSON.stringify(message));
+                log(`📤 发送消息: ${JSON.stringify(message)}`, 'info');
+            } else {
+                log('⚠️ WebSocket 未连接', 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('logs').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
